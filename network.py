@@ -8,7 +8,7 @@ class Network:
     def __init__(self, settings: Settings, number_ues:int): 
         self.settings = settings
         self.shadow_coefficient = self.generate_shadow_coefficient(number_ues=number_ues)
-        self.user_equipaments = UserEquipments(number_ues=number_ues, cell_radius=settings.cell_radius, cell_center=settings.cell_radius)
+        self.user_equipaments = UserEquipments(number_ues=number_ues, cell_radius=settings.cell_radius, cell_center=settings.cell_center)
         
     def generate_shadow_coefficient(self, number_ues:int): 
         return np.random.normal(0, self.settings.sigma_shadow_fading, size=number_ues)
