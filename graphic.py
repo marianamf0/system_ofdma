@@ -31,7 +31,6 @@ def graphic_cdf(value:list, title_xlabel:str, xscale: str = "linear", name:str =
     graf.set_xscale(xscale)
     graf.set_xlabel(title_xlabel, fontweight='bold')
     graf.set_ylabel("CDF", fontweight='bold')
-    plt.show()
         
     if name != None: 
         fig.savefig(f"image/{name}.png", bbox_inches='tight', pad_inches=0)
@@ -42,7 +41,5 @@ def graphic_cdf(value:list, title_xlabel:str, xscale: str = "linear", name:str =
 if __name__ == "__main__":
     
     settings = Settings(number_subcarriers = 32, path_loss_exponent = 4, cell_radius = 1000)
-
     network = Network(settings=settings, number_ues=10)
-
     graphic_network(network)
