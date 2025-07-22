@@ -4,7 +4,7 @@ from utils import lin2db
 class Settings: 
     
     def __init__(self, number_subcarriers:int, path_loss_exponent:float, transmition_power:float = 1000, sigma_shadow_fading:float=6, bandwidth:float = 10e6, 
-                 cell_center:complex = 0, cell_radius:float = 1000, noise_power_spectral_density:float = 1e-8):
+                 cell_center:complex = 0, cell_radius:float = 1000, noise_power_spectral_density:float = 1e-20):
         self.total_bandwidth = bandwidth  # em Hz
         self.cell_center = cell_center
         self.cell_radius = cell_radius # em m 

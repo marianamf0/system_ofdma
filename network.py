@@ -29,7 +29,8 @@ class Network:
     def interferente_power_per_ue(self, index_ue:int): 
         interferente_power = 0
         for index_interferente in range(6): 
-            interferente_power += db2pow(self.received_power_per_ue(index_ue=index_ue, index_bs_inteferente=index_interferente))
+            interference = lin2db(self.settings.max_transmition_power_mW) - self.path_loss_per_ue(index_ue=index_ue, index_bs_inteferente=index_interferente)
+            interferente_power += db2pow(interference) #db2pow(self.received_power_per_ue(index_ue=index_ue, index_bs_inteferente=index_interferente))
         return lin2db(interferente_power)
     
     def calculate_sinr_per_ue(self, index_ue:int): 

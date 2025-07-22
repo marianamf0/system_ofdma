@@ -40,7 +40,7 @@ capacity_max_sinr = simulation_monte_carlo(
     }
 )
 
-capacity_total_max_sinr = [sum(sublist)/1e6 for sublist in capacity_max_sinr]
+capacity_total_max_sinr = [sum(sublist) for sublist in capacity_max_sinr]
 graphic_cdf(value=capacity_total_max_sinr, title_xlabel="Capacity (Mbps)")
 
 capacity_max_sinr = [item/1e6 for sublist in capacity_max_sinr for item in sublist]
