@@ -16,15 +16,19 @@ def analysis(settings: Settings, number_ues:int, type_allocation:str="round-robi
 
 capacity_round_robin = simulation_monte_carlo(
     function=analysis,
-    number_simulation=int(1e6),
+    number_simulation=int(1e4),
     **{
         'settings': Settings(number_subcarriers = 32, path_loss_exponent = 4, cell_radius = 1000),
         'number_ues': 10,
         'type_allocation': "round-robin"
     }
 )
-capacity_round_robin = [item/1e6 for sublist in capacity_round_robin for item in sublist]
-graphic_cdf(value=capacity_round_robin, title_xlabel="Capacity (Mbps)")
+
+capacity_total_round_robin = [sum(sublist)/1e6 for sublist in capacity_round_robin]
+graphic_cdf(value=capacity_total_round_robin, title_xlabel="Capacity (Mbps)")
+
+capacity_individual_round_robin = [item/1e6 for sublist in capacity_round_robin for item in sublist]
+graphic_cdf(value=capacity_individual_round_robin, title_xlabel="Capacity (Mbps)")
 
 capacity_max_sinr = simulation_monte_carlo(
     function=analysis,
@@ -35,6 +39,9 @@ capacity_max_sinr = simulation_monte_carlo(
         'type_allocation': "sinr"
     }
 )
+
+capacity_total_max_sinr = [sum(sublist)/1e6 for sublist in capacity_max_sinr]
+graphic_cdf(value=capacity_total_max_sinr, title_xlabel="Capacity (Mbps)")
 
 capacity_max_sinr = [item/1e6 for sublist in capacity_max_sinr for item in sublist]
 graphic_cdf(value=capacity_max_sinr, title_xlabel="Capacity (Mbps)")
