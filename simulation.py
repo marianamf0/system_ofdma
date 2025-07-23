@@ -5,6 +5,17 @@ from utils import simulation_monte_carlo
 from scheduler import round_robin_allocation, max_sinr_allocation
 
 def analysis(settings: Settings, number_ues:int, type_allocation:str="round-robin"): 
+    """
+    Perform a single network simulation to calculate UE capacities.
+
+    Args:
+        settings (Settings): Network and system configuration.
+        number_ues (int): Number of UEs in the simulation.
+        type_allocation (str, optional): Resource allocation method ("round-robin" or "sinr"). Defaults to "round-robin".
+
+    Returns:
+        list: List of capacities (in bps) for each UE in the simulation.
+    """
     network = Network(settings=settings, number_ues=number_ues)
     if type_allocation.lower() == "round-robin": 
         subcarriers_allocation = round_robin_allocation(number_ues=number_ues, number_subcarriers=settings.number_subcarriers)
@@ -14,34 +25,37 @@ def analysis(settings: Settings, number_ues:int, type_allocation:str="round-robi
 
     return network.calculate_capacity(subcarriers_allocation)
 
-capacity_round_robin = simulation_monte_carlo(
-    function=analysis,
-    number_simulation=int(1e4),
-    **{
-        'settings': Settings(number_subcarriers = 32, path_loss_exponent = 4, cell_radius = 1000),
-        'number_ues': 10,
-        'type_allocation': "round-robin"
-    }
-)
 
-capacity_total_round_robin = [sum(sublist)/1e6 for sublist in capacity_round_robin]
-graphic_cdf(value=capacity_total_round_robin, title_xlabel="Capacity (Mbps)")
+if __name__ == "__main__":
+    
+    capacity_round_robin = simulation_monte_carlo(
+        function=analysis,
+        number_simulation=int(1e4),
+        **{
+            'settings': Settings(number_subcarriers = 32, path_loss_exponent = 4, cell_radius = 1000),
+            'number_ues': 10,
+            'type_allocation': "round-robin"
+        }
+    )
+    
+    capacity_total_round_robin = [sum(sublist)/1e6 for sublist in capacity_round_robin]
+    graphic_cdf(value=capacity_total_round_robin, title_xlabel="Capacity (Mbps)")
 
-capacity_individual_round_robin = [item/1e6 for sublist in capacity_round_robin for item in sublist]
-graphic_cdf(value=capacity_individual_round_robin, title_xlabel="Capacity (Mbps)")
+    capacity_individual_round_robin = [item/1e6 for sublist in capacity_round_robin for item in sublist]
+    graphic_cdf(value=capacity_individual_round_robin, title_xlabel="Capacity (Mbps)")
 
-capacity_max_sinr = simulation_monte_carlo(
-    function=analysis,
-    number_simulation=int(1e4),
-    **{
-        'settings': Settings(number_subcarriers = 32, path_loss_exponent = 4, cell_radius = 1000),
-        'number_ues': 10,
-        'type_allocation': "sinr"
-    }
-)
+    capacity_max_sinr = simulation_monte_carlo(
+        function=analysis,
+        number_simulation=int(1e4),
+        **{
+            'settings': Settings(number_subcarriers = 32, path_loss_exponent = 4, cell_radius = 1000),
+            'number_ues': 10,
+            'type_allocation': "sinr"
+        }
+    )
 
-capacity_total_max_sinr = [sum(sublist)/1e6 for sublist in capacity_max_sinr]
-graphic_cdf(value=capacity_total_max_sinr, title_xlabel="Capacity (Mbps)")
+    capacity_total_max_sinr = [sum(sublist)/1e6 for sublist in capacity_max_sinr]
+    graphic_cdf(value=capacity_total_max_sinr, title_xlabel="Capacity (Mbps)")
 
-capacity_max_sinr = [item/1e6 for sublist in capacity_max_sinr for item in sublist]
-graphic_cdf(value=capacity_max_sinr, title_xlabel="Capacity (Mbps)")
+    capacity_max_sinr = [item/1e6 for sublist in capacity_max_sinr for item in sublist]
+    graphic_cdf(value=capacity_max_sinr, title_xlabel="Capacity (Mbps)")

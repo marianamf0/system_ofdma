@@ -5,6 +5,12 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 
 def graphic_network(network:Network): 
+    """
+    Plot the network layout
+
+    Args:
+        network (Network): The network object containing cell and UE information.
+    """
     fig, graf = plt.subplots(figsize = (6, 4), constrained_layout=True)
     circle = Circle((np.real(network.settings.cell_center), np.imag(network.settings.cell_center)), radius=network.settings.cell_radius, fill=False)
     graf.add_patch(circle)
@@ -23,6 +29,15 @@ def graphic_network(network:Network):
     
 
 def graphic_cdf(value:list, title_xlabel:str, xscale: str = "linear", name:str = None): 
+    """
+    Plot a Cumulative Distribution Function (CDF) of the given values.
+
+    Args:
+        value (list): Values to compute and plot the CDF.
+        title_xlabel (str): Label for the X-axis.
+        xscale (str, optional): Scale for the X-axis ("linear" or "log"). Defaults to "linear".
+        name (str, optional): If provided, saves the figure as a PNG in the 'image/' directory. Defaults to None.
+    """
     
     fig, graf = plt.subplots(figsize = (6, 4), constrained_layout=True) 
     graf.plot(sorted(value), np.linspace(0, 1, len(value)))
