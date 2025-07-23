@@ -30,8 +30,7 @@ class Settings:
             
         return np.array(positions)
     
-    
-    def noise_power_dbm(self): 
+    def noise_power_mW(self): 
         noise_power = self.noise_power_spectral_density*self.total_bandwidth/self.number_subcarriers
-        return lin2db(noise_power) + 30
+        return noise_power*1000
         
