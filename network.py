@@ -19,8 +19,8 @@ class Network:
         """
         self.settings = settings
         self.shadow_coefficient = self.generate_shadow_coefficient(number_ues=number_ues)
-        self.transmition_power_dbm = self.calculate_transmition_power(number_ues=number_ues)
         self.user_equipaments = UserEquipments(number_ues=number_ues, cell_radius=settings.cell_radius, cell_center=settings.cell_center)
+        self.transmition_power_dbm = self.calculate_transmition_power(number_ues=number_ues)
 
     def calculate_transmition_power(self, number_ues:int):
         """
@@ -32,7 +32,15 @@ class Network:
         Returns:
             np.ndarray: Transmission power allocated to each UE in dBm.
         """
-        return lin2db(self.settings.max_transmition_power_mW/number_ues)*np.ones(number_ues)
+        if self.settings.power_allocation_strategy.lower() == "uniform": 
+            return lin2db(self.settings.max_transmition_power_mW/number_ues)*np.ones(number_ues)
+        
+        elif self.settings.power_allocation_strategy.lower() == "inverse_pathloss":
+            path_loss = [db2pow(self.path_loss_per_ue(index_ue=index_ue)) for index_ue in range(self.user_equipaments.number_ues)]
+            weights = 1 / np.array(path_loss)
+            return lin2db((weights/np.sum(weights)) * self.settings.max_transmition_power_mW)
+        else:
+            raise ValueError(f"Unknown power allocation strategy: {self.settings.power_allocation_strategy}")
         
     def generate_shadow_coefficient(self, number_ues:int): 
         """
