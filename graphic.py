@@ -54,7 +54,7 @@ def graphic_cdf(value:list, title_xlabel:str, xscale: str = "linear", name:str =
     else:
         plt.show()
         
-def graphic_cdf_per_scheduler(output:dict, title_xlabel:str, title_parameters:str, xscale: str = "linear", name:str = None): 
+def graphic_cdf_per_scheduler2(output:dict, title_xlabel:str, title_parameters:str, name:str = None): 
     """
     Plot CDF graphs for total and per-user capacity under different scheduling strategies and power allocation methods.
 
@@ -68,38 +68,101 @@ def graphic_cdf_per_scheduler(output:dict, title_xlabel:str, title_parameters:st
         xscale (str, optional): X-axis scale (e.g., "linear" or "log"). Defaults to "linear".
         name (str, optional): If provided, saves the figure as a PNG in the 'image/' directory. Defaults to None.
     """
+    cmap = plt.get_cmap("tab10")
+    line_styles = {"Round-Robin": "-", "Max-SINR": "--"}
+    fig, graf = plt.subplots(2, 2, figsize = (12, 8), constrained_layout=True) 
     
-    base_colors = {"Round-Robin": 'blue', "Max-SINR": "orange"}
+    legend_linestyle = [Line2D([0], [0], color='black', linestyle=linestyle, label=label) 
+                        for label, linestyle in line_styles.items()]
+    
+    for index, strategy in enumerate(["Uniform Power", "Inverse Pathloss Power"]): 
+        style_legend = []
+        for index_subcarriers, subcarriers in enumerate(list(output.keys())): 
+            for scheduler, linestyle_scheduler in line_styles.items(): 
+                output_subcarriers = output[subcarriers][scheduler][strategy]
+                
+                value = output_subcarriers["total"]
+                graf[index, 0].plot(sorted(value), np.linspace(0, 1, len(value)),
+                                    color=cmap(index_subcarriers), linestyle=linestyle_scheduler)
+                
+                value = output_subcarriers["individual"]
+                graf[index, 1].plot(sorted(value), np.linspace(0, 1, len(value)), 
+                                    color=cmap(index_subcarriers), linestyle=linestyle_scheduler)
+
+            style_legend.append(
+                Line2D([0], [0], color=cmap(index_subcarriers), linestyle='-', label=rf"$N$ = {subcarriers}")
+            )
+            
+            for index_graf, title in enumerate(["Total Cell Capacity", "Per-UE Capacity"]): 
+                graf[index, index_graf].grid(True, which='major', linestyle='-', linewidth=0.75)
+                graf[index, index_graf].tick_params(axis='both', which='both', direction='in', top=True, right=True)
+                graf[index, index_graf].set_xscale("linear")
+                graf[index, index_graf].set_xlabel(title_xlabel, fontweight='bold')
+                graf[index, index_graf].set_ylabel("CDF", fontweight='bold')
+                graf[index, index_graf].set_title(f"{title} - {strategy} and {title_parameters}", fontweight='bold')
+                
+        
+                legend1 = graf[index, index_graf].legend(handles=style_legend + legend_linestyle, loc="lower right")
+                graf[index, index_graf].add_artist(legend1)
+                        
+    if name != None: 
+        fig.savefig(f"image/{name}.png", bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
+    else:
+        plt.show()
+
+        
+def graphic_cdf_per_scheduler(output:dict, title_xlabel:str, title_parameters:str, name:str = None): 
+    """
+    Plot CDF graphs for total and per-user capacity under different scheduling strategies and power allocation methods.
+
+    Args:
+        output (dict): Dictionary containing simulation results. Keys follow the format "<Scheduler> (<Power Strategy>)".
+            Each value is another dict with:
+                - "total" (list): Total cell capacity values for all simulations.
+                - "individual" (list): Per-user capacity values for all simulations.
+        title_xlabel (str): Label for the x-axis (e.g., "Capacity (Mbps)").
+        title_parameters (str): String containing parameters of the scenario to display in the subplot titles.
+        xscale (str, optional): X-axis scale (e.g., "linear" or "log"). Defaults to "linear".
+        name (str, optional): If provided, saves the figure as a PNG in the 'image/' directory. Defaults to None.
+    """
+    cmap = plt.get_cmap("tab10")
+    base_colors = {"Round-Robin": 'blue', "Max-SINR": "red"}
     line_styles = {"Uniform Power": "-", "Inverse Pathloss Power": "--"}
-    fig, graf = plt.subplots(1, 2, figsize = (12, 4), constrained_layout=True) 
+    fig, graf = plt.subplots(2, 2, figsize = (12, 8), constrained_layout=True) 
     
-    for key, capacity_dict in output.items(): 
-        scheduler_name, strategy = key.split(" (")
-        strategy = strategy.strip(")")
+    legend_linestyle = [Line2D([0], [0], color='black', linestyle=linestyle, label=label) 
+                        for label, linestyle in line_styles.items()]
+    for index, scheduler_name in enumerate(["Round-Robin", "Max-SINR"]): 
+        style_legend = []
+        for index_subcarriers, subcarriers in enumerate(list(output.keys())): 
+            output_subcarriers = output[subcarriers][scheduler_name]
+            
+            for strategy, linestyle_strategy in line_styles.items(): 
+                
+                value = output_subcarriers[strategy]["total"]
+                graf[index, 0].plot(sorted(value), np.linspace(0, 1, len(value)),
+                                    color=cmap(index_subcarriers), linestyle=linestyle_strategy)
+                
+                value = output_subcarriers[strategy]["individual"]
+                graf[index, 1].plot(sorted(value), np.linspace(0, 1, len(value)), 
+                                    color=cmap(index_subcarriers), linestyle=linestyle_strategy)
+            
+            style_legend.append(
+                Line2D([0], [0], color=cmap(index_subcarriers), linestyle='-', label=rf"$N$ = {subcarriers}")
+            )
+            
+            for index_graf, title in enumerate(["Total Cell Capacity", "Per-UE Capacity"]): 
+                graf[index, index_graf].grid(True, which='major', linestyle='-', linewidth=0.75)
+                graf[index, index_graf].tick_params(axis='both', which='both', direction='in', top=True, right=True)
+                graf[index, index_graf].set_xscale("linear")
+                graf[index, index_graf].set_xlabel(title_xlabel, fontweight='bold')
+                graf[index, index_graf].set_ylabel("CDF", fontweight='bold')
+                graf[index, index_graf].set_title(f"{title} - {scheduler_name} Scheduler ({title_parameters})", fontweight='bold')
 
-        value = capacity_dict["total"]
-        graf[0].plot(sorted(value), np.linspace(0, 1, len(value)),
-                     color=base_colors[scheduler_name], linestyle=line_styles[strategy])
-
-        value = capacity_dict["individual"]
-        graf[1].plot(sorted(value), np.linspace(0, 1, len(value)),
-                     color=base_colors[scheduler_name], linestyle=line_styles[strategy])
-        
-    for index, title in enumerate(["Total Cell Capacity", "Per-UE Capacity"]): 
-        graf[index].grid(True, which='major', linestyle='-', linewidth=0.75)
-        graf[index].tick_params(axis='both', which='both', direction='in', top=True, right=True)
-        graf[index].set_xscale(xscale)
-        graf[index].set_xlabel(title_xlabel, fontweight='bold')
-        graf[index].set_ylabel("CDF", fontweight='bold')
-        graf[index].set_title(f"{title} ({title_parameters})", fontweight='bold')
-    
-    style_legend = [
-        Line2D([0], [0], color='black', linestyle=linestyle, label=label) for label, linestyle in line_styles.items()
-    ] + [Line2D([0], [0], color=color, linestyle='-', label=f"{label} Scheduler") for label, color in base_colors.items()]
-
-    legend1 = fig.legend(handles=style_legend, loc="center right", bbox_to_anchor=(1.2, 0.6))
-    fig.add_artist(legend1)
-        
+                legend1 = graf[index, index_graf].legend(handles=style_legend + legend_linestyle, loc="lower right")
+                graf[index, index_graf].add_artist(legend1)
+                        
     if name != None: 
         fig.savefig(f"image/{name}.png", bbox_inches='tight', pad_inches=0)
         plt.close(fig)
