@@ -127,41 +127,41 @@ def graphic_cdf_per_scheduler(output:dict, title_xlabel:str, title_parameters:st
         name (str, optional): If provided, saves the figure as a PNG in the 'image/' directory. Defaults to None.
     """
     cmap = plt.get_cmap("tab10")
-    base_colors = {"Round-Robin": 'blue', "Max-SINR": "red"}
-    line_styles = {"Uniform Power": "-", "Inverse Pathloss Power": "--"}
-    fig, graf = plt.subplots(2, 2, figsize = (12, 8), constrained_layout=True) 
+    fig, graf = plt.subplots(2, 2, figsize = (10, 6), constrained_layout=True) 
     
-    legend_linestyle = [Line2D([0], [0], color='black', linestyle=linestyle, label=label) 
-                        for label, linestyle in line_styles.items()]
     for index, scheduler_name in enumerate(["Round-Robin", "Max-SINR"]): 
         style_legend = []
         for index_subcarriers, subcarriers in enumerate(list(output.keys())): 
             output_subcarriers = output[subcarriers][scheduler_name]
+                    
+            value = output_subcarriers["total"]
+            graf[index, 0].plot(sorted(value), np.linspace(0, 1, len(value)),
+                                color=cmap(index_subcarriers), linestyle="-")
             
-            for strategy, linestyle_strategy in line_styles.items(): 
-                
-                value = output_subcarriers[strategy]["total"]
-                graf[index, 0].plot(sorted(value), np.linspace(0, 1, len(value)),
-                                    color=cmap(index_subcarriers), linestyle=linestyle_strategy)
-                
-                value = output_subcarriers[strategy]["individual"]
-                graf[index, 1].plot(sorted(value), np.linspace(0, 1, len(value)), 
-                                    color=cmap(index_subcarriers), linestyle=linestyle_strategy)
+            value = output_subcarriers["individual"]
+            graf[index, 1].plot(sorted(value), np.linspace(0, 1, len(value)), 
+                                color=cmap(index_subcarriers), linestyle="-")
             
             style_legend.append(
                 Line2D([0], [0], color=cmap(index_subcarriers), linestyle='-', label=rf"$N$ = {subcarriers}")
             )
             
-            for index_graf, title in enumerate(["Total Cell Capacity", "Per-UE Capacity"]): 
-                graf[index, index_graf].grid(True, which='major', linestyle='-', linewidth=0.75)
-                graf[index, index_graf].tick_params(axis='both', which='both', direction='in', top=True, right=True)
-                graf[index, index_graf].set_xscale("linear")
-                graf[index, index_graf].set_xlabel(title_xlabel, fontweight='bold')
-                graf[index, index_graf].set_ylabel("CDF", fontweight='bold')
-                graf[index, index_graf].set_title(f"{title} - {scheduler_name} Scheduler ({title_parameters})", fontweight='bold')
+        for index_graf, title in enumerate(["Total Cell Capacity", "Per-UE Capacity"]): 
+            graf[index, index_graf].grid(True, which='major', linestyle='-', linewidth=0.75)
+            graf[index, index_graf].tick_params(axis='both', which='both', direction='in', top=True, right=True)
+            graf[index, index_graf].set_xscale("linear")
+            graf[index, index_graf].set_xlabel(title_xlabel, fontweight='bold')
+            graf[index, index_graf].set_ylabel("CDF", fontweight='bold')
+            graf[index, index_graf].set_title(f"{title} - {scheduler_name} Scheduler\n", fontweight='bold')
 
-                legend1 = graf[index, index_graf].legend(handles=style_legend + legend_linestyle, loc="lower right")
-                graf[index, index_graf].add_artist(legend1)
+            legend1 = graf[index, index_graf].legend(handles=style_legend, loc="lower right")
+            graf[index, index_graf].add_artist(legend1)
+
+            graf[index, index_graf].text(0.5, 1.04, f"{title_parameters}", 
+                transform=graf[index, index_graf].transAxes, fontsize=10, ha='center')
+
+            # xlim, ylim = graf[index, index_graf].get_xlim(), graf[index, index_graf].get_ylim()
+            # graf[index, index_graf].text(1.15*xlim[0], 0.75*ylim[1], f'{title_parameters}', fontsize=11, color='black')
                         
     if name != None: 
         fig.savefig(f"image/{name}.png", bbox_inches='tight', pad_inches=0)

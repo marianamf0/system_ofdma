@@ -6,18 +6,19 @@ from graphic import graphic_cdf
 from utils import simulation_monte_carlo
 from scheduler import round_robin_allocation, max_sinr_allocation
 
-def analysis_scheduler(settings: Settings, type_allocation:str="round-robin"): 
+def analysis_scheduler(number_ues:int, settings: Settings, type_allocation:str="round-robin"): 
     """
     Perform a single network simulation to calculate UE capacities.
 
     Args:
+        number_ues (int): Number of UEs in the simulation.
         settings (Settings): Network and system configuration.
         type_allocation (str, optional): Resource allocation method ("round-robin" or "sinr"). Defaults to "round-robin".
 
     Returns:
         list: List of capacities (in bps) for each UE in the simulation.
     """
-    number_ues = random.choice([10, 20, 40, 80])
+
     network = Network(settings=settings, number_ues=number_ues)
     if type_allocation.lower() == "round-robin": 
         subcarriers_allocation = round_robin_allocation(number_ues=number_ues, number_subcarriers=settings.number_subcarriers)
@@ -27,12 +28,13 @@ def analysis_scheduler(settings: Settings, type_allocation:str="round-robin"):
 
     return network.calculate_capacity(subcarriers_allocation)
 
-def analysis_per_scheduler(path_loss_exponent:int, cell_radius:int, verbose:bool=False):
+def analysis_per_scheduler(number_ues:int, path_loss_exponent:int, cell_radius:int, power_strategy:str, verbose:bool=False):
     """
     Run Monte Carlo simulations to analyze capacity performance under different 
     scheduling and power allocation strategies.
 
     Args:
+        number_ues (int): Number of UEs in the simulation.
         path_loss_exponent (int): Path loss exponent (e.g., 4 for normal, 5 for urban).
         cell_radius (int): Cell radius in meters. Defaults to 1000.
         verbose (bool, optional): If True, prints percentiles (10th, 50th, 90th) for 
@@ -49,37 +51,33 @@ def analysis_per_scheduler(path_loss_exponent:int, cell_radius:int, verbose:bool
     """
     output = {}
     schedulers = {"Round-Robin": "round-robin", "Max-SINR": "sinr"}
-    power_allocation_strategies: list = {"Uniform Power": "uniform", "Inverse Pathloss Power": "inverse_pathloss"}
+    power_strategy_name = "Uniform Power" if power_strategy == "uniform" else "Inverse Pathloss Power"
     
     for subcarriers in [32, 64, 128]: 
         output_scheduler = {}
         for scheduler_name, scheduler in schedulers.items():
-            output_power = {}
-            for power_strategy_name, power_strategy in power_allocation_strategies.items():
-                settings = Settings(number_subcarriers=subcarriers, path_loss_exponent=path_loss_exponent,
-                                    cell_radius=cell_radius, power_allocation_strategy=power_strategy)
+            settings = Settings(number_subcarriers=subcarriers, path_loss_exponent=path_loss_exponent,
+                                cell_radius=cell_radius, power_allocation_strategy=power_strategy)
 
-                capacity = simulation_monte_carlo(
-                    function=analysis_scheduler,
-                    number_simulation=int(1e3),
-                    **{'settings': settings, 'type_allocation': scheduler}
-                )
-                
-                capacity_total = [sum(sublist)/1e6 for sublist in capacity]
-                capacity_individual = [item/1e6 for sublist in capacity for item in sublist]
-                
-                output_power[power_strategy_name] = {"total": capacity_total, "individual": capacity_individual}
-                
-                if verbose:
-                    print(f"\n=== {scheduler_name} Scheduler ({power_strategy_name} and N = {subcarriers}) ===")
-                    print(f"Per-UE Capacity (Mbps): 10th={np.percentile(capacity_individual, 10):.2f}, "
-                        f"50th={np.percentile(capacity_individual, 50):.2f}, "
-                        f"90th={np.percentile(capacity_individual, 90):.2f}")
-                    print(f"Total Cell Capacity (Mbps): 10th={np.percentile(capacity_total, 10):.2f}, "
-                        f"50th={np.percentile(capacity_total, 50):.2f}, "
-                        f"90th={np.percentile(capacity_total, 90):.2f}")
+            capacity = simulation_monte_carlo(
+                function=analysis_scheduler,
+                number_simulation=int(1e3),
+                **{'settings': settings, 'number_ues': number_ues, 'type_allocation': scheduler}
+            )
             
-            output_scheduler[scheduler_name] = output_power
+            capacity_total = [sum(sublist)/1e6 for sublist in capacity]
+            capacity_individual = [item/1e6 for sublist in capacity for item in sublist]
+            
+            if verbose:
+                print(f"--- {scheduler_name} Scheduler ({power_strategy_name}, N = {subcarriers} and R = {cell_radius/1000}km) ---")
+                print(f"Per-UE Capacity (Mbps): 10th={np.percentile(capacity_individual, 10):.2f}, "
+                    f"50th={np.percentile(capacity_individual, 50):.2f}, "
+                    f"90th={np.percentile(capacity_individual, 90):.2f}")
+                print(f"Total Cell Capacity (Mbps): 10th={np.percentile(capacity_total, 10):.2f}, "
+                    f"50th={np.percentile(capacity_total, 50):.2f}, "
+                    f"90th={np.percentile(capacity_total, 90):.2f}\n")
+        
+            output_scheduler[scheduler_name] = {"total": capacity_total, "individual": capacity_individual}
         
         output[subcarriers] = output_scheduler
     
